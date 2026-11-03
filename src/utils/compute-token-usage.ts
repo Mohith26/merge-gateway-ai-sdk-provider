@@ -10,12 +10,15 @@ export function computeTokenUsage(usage: {
   prompt_tokens_details?: { cached_tokens?: number };
   completion_tokens_details?: { reasoning_tokens?: number };
 }): LanguageModelV3Usage {
+  const total = usage.prompt_tokens ?? 0;
   const cacheRead = usage.prompt_tokens_details?.cached_tokens;
   const reasoning = usage.completion_tokens_details?.reasoning_tokens;
   return {
     inputTokens: {
-      total: usage.prompt_tokens ?? 0,
-      noCache: undefined,
+      total,
+      // Input tokens not served from cache. Consumers such as OpenCode read this
+      // as the uncached input count, so leaving it undefined reports 0 input tokens.
+      noCache: Math.max(0, total - (cacheRead ?? 0)),
       cacheRead,
       cacheWrite: undefined,
     },
@@ -32,7 +35,7 @@ export function emptyUsage(): LanguageModelV3Usage {
   return {
     inputTokens: {
       total: 0,
-      noCache: undefined,
+      noCache: 0,
       cacheRead: undefined,
       cacheWrite: undefined,
     },
